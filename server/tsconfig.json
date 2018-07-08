@@ -1,0 +1,19 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/",
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "module": "commonjs",
+    "target": "es6",
+    "sourceMap": false,
+    "types" : ["node", "express", "mocha"],
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  }
+}
