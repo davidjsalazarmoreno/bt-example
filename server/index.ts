@@ -1,5 +1,9 @@
-import { PORT, app } from './server';
+import * as dotenv from 'dotenv';
+
+import { app } from './server';
+
+const { PORT } = dotenv.config().parsed;
 
 app.listen(PORT, function() {
-  console.log(`Started api server at port ${PORT}`);
+  console.log(`Started MoneyExchange.io server at port ${PORT}`);
 });
