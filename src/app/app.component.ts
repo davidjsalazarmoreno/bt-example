@@ -1,6 +1,8 @@
 import { Component, OnInit,  } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import {format, differenceInMinutes} from 'date-fns';
+
 
 const controlsConfig = {
   availableExchanges: {
@@ -24,8 +26,8 @@ export interface IExchange {
 export interface IPreviousConversions {
   [key: string]: {
     result: number,
-    createdAt: string,
-  }
+    createdAt: Date,
+  };
 }
 
 @Component({
@@ -83,9 +85,11 @@ export class AppComponent implements OnInit {
     const selectedIndex: number = this.form.controls[controlsConfig.availableExchanges.name].value;
     const { from, to } = this.availableExchanges[selectedIndex].currencies;
     const fromAmount: number = this.form.controls[controlsConfig.from.name].value;
+    const currentConversionKey = `${from}-${to}-${fromAmount}`;
     const previousConversions: IPreviousConversions = JSON.parse(window.sessionStorage.getItem('previousConversions')) || {};
+    const { isLessThanTenMinutes } = this;
 
-    if (previousConversions.hasOwnProperty(`${from}-${to}-${fromAmount}`)) {
+    if (previousConversions.hasOwnProperty(currentConversionKey) && isLessThanTenMinutes(previousConversions[currentConversionKey])) {
       this.form.controls[controlsConfig.to.name].patchValue(previousConversions[`${from}-${to}-${fromAmount}`].result);
     } else {
       this._httpClient.post<{amount: number}>(`http://localhost:7777/api/v1/currency/exchange/${from}/`, {
@@ -96,7 +100,7 @@ export class AppComponent implements OnInit {
           ...previousConversions,
           [`${from}-${to}-${fromAmount}`]: {
             result: result.amount,
-            createdAt: ''
+            createdAt: new Date(),
           }
         };
 
@@ -107,6 +111,18 @@ export class AppComponent implements OnInit {
         throw new Error(error);
       });
     }
+  }
 
+  public isLessThanTenMinutes(conversion: {
+    result: number,
+    createdAt: Date,
+  }): boolean {
+    const creationDiference = differenceInMinutes(
+      new Date(),
+      new Date(conversion.createdAt),
+    );
+    const limitUntilCallBackend = 10;
+
+    return creationDiference <= limitUntilCallBackend;
   }
 }
