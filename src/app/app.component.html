@@ -9,6 +9,7 @@
     [formControlName]="controlsConfig.availableExchanges.name"
     (change)="onExchangeSelect()"
   >
+    <option value="" selected="selected">Select</option>
     <option
       *ngFor="let exchange of availableExchanges; let i = index"
       [value]="i"
