@@ -1,0 +1,13 @@
+<select
+  class="exchanges-selector"
+  [(ngModel)]="selected"
+  (change)="onChange()"
+>
+  <option value="" selected="selected">Select</option>
+  <option
+    *ngFor="let exchange of exchanges; let i = index"
+    [value]="i"
+  >
+    {{exchange.currencies.from + '-' + exchange.currencies.to}}
+  </option>
+</select>
