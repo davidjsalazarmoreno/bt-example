@@ -1,13 +1,13 @@
 import * as chai from 'chai';
 import chaiHttp = require('chai-http');
 
-import { app, PREFIX, PORT } from './../server';
+import { app } from './../server';
 
 const should = chai.should();
 
 chai.use(chaiHttp);
 
-describe('Test main API', () => {
+describe('Test Parameters', () => {
   const usdToEur = {
     currencies: { from: 'USD', to: 'EUR' },
     config: {
@@ -45,27 +45,6 @@ describe('Test main API', () => {
             done();
           });
     });
-  });
-
-  describe('/POST exchanges', () => {
-    it('it should calculates the currency exchanges from USD to EUR', (done) => {
-      chai.request(app)
-          .post(`/api/v1/currency/exchange/USD`)
-          .send({
-            to: 'EUR',
-            amount: 200,
-          })
-          .set('Content-Type', 'application/json')
-          .set('Accept', 'application/json')
-          .end((error, response) => {
-            should.not.exist(error);
-            response.should.have.status(200);
-            response.body.should.be.a('object');
-            response.body.should.have.property('amount').to.be.a('number');
-            done();
-          });
-    });
-
   });
 
 });
