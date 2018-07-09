@@ -21,6 +21,13 @@ export interface IExchange {
   };
 }
 
+export interface IPreviousConversions {
+  [key: string]: {
+    result: number,
+    createdAt: string,
+  }
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -72,18 +79,34 @@ export class AppComponent implements OnInit {
 
   }
 
-  onSubmit() {
+  onSubmit(): void {
     const selectedIndex: number = this.form.controls[controlsConfig.availableExchanges.name].value;
     const { from, to } = this.availableExchanges[selectedIndex].currencies;
     const fromAmount: number = this.form.controls[controlsConfig.from.name].value;
+    const previousConversions: IPreviousConversions = JSON.parse(window.sessionStorage.getItem('previousConversions')) || {};
 
-    this._httpClient.post<{amount: number}>(`http://localhost:7777/api/v1/currency/exchange/${from}/`, {
-      to,
-      amount: fromAmount
-    }).subscribe((result) => {
-      this.form.controls[controlsConfig.to.name].patchValue(result.amount);
-    }, (error) => {
-      throw new Error(error);
-    });
+    if (previousConversions.hasOwnProperty(`${from}-${to}-${fromAmount}`)) {
+      this.form.controls[controlsConfig.to.name].patchValue(previousConversions[`${from}-${to}-${fromAmount}`].result);
+    } else {
+      this._httpClient.post<{amount: number}>(`http://localhost:7777/api/v1/currency/exchange/${from}/`, {
+        to,
+        amount: fromAmount
+      }).subscribe((result) => {
+        const newResult: IPreviousConversions = {
+          ...previousConversions,
+          [`${from}-${to}-${fromAmount}`]: {
+            result: result.amount,
+            createdAt: ''
+          }
+        };
+
+        this.form.controls[controlsConfig.to.name].patchValue(result.amount);
+        window.sessionStorage.setItem('previousConversions', JSON.stringify(newResult));
+
+      }, (error) => {
+        throw new Error(error);
+      });
+    }
+
   }
 }
