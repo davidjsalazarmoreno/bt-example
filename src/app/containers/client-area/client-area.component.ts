@@ -1,7 +1,7 @@
 import { Component, OnInit,  } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 
+import { ApiService } from '../../business/services/api.services';
 import { IExchange } from '../../components/exchanges-selector/exchanges-selector.component';
 import { isLessThanTenMinutes } from '../../commons/index';
 
@@ -17,6 +17,7 @@ const controlsConfig = {
   }
 };
 
+// TODO: LOOK A PLACE FOR THIS
 export interface IPreviousConversions {
   [key: string]: {
     result: number,
@@ -25,31 +26,27 @@ export interface IPreviousConversions {
 }
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.sass']
+  selector: 'app-client-area',
+  templateUrl: './client-area.component.html',
+  styleUrls: ['./client-area.component.sass']
 })
-export class AppComponent implements OnInit {
+export class ClientAreaComponent implements OnInit {
   public availableExchanges: Array<IExchange> = [];
   public controlsConfig = controlsConfig;
   public form: FormGroup;
 
-  fromOptions = {};
-  toOptions = {};
+  fromOptions = { prefix: '', thousands: ',', decimal: '.' };
+  toOptions =  { prefix: '', thousands: ',', decimal: '.' };
 
   constructor(
-    private _httpClient: HttpClient,
+    private _apiService: ApiService,
     private _formBuilder: FormBuilder,
   ) {}
 
   public ngOnInit() {
     this.buildForm();
 
-    this._httpClient.get<Array<IExchange>>('http://localhost:7777/api/v1/parameters', {
-      params: {
-        parameter: 'exchanges'
-      }
-    }).subscribe((response) => {
+    this._apiService.getParameters('exchanges').subscribe((response) => {
       this.availableExchanges = response;
     }, (error) => {
       throw new Error(error);
@@ -83,7 +80,8 @@ export class AppComponent implements OnInit {
     if (previousConversions.hasOwnProperty(currentConversionKey) && isLessThanTenMinutes(previousConversions[currentConversionKey])) {
       this.form.controls[controlsConfig.to.name].patchValue(previousConversions[`${from}-${to}-${fromAmount}`].result);
     } else {
-      this._httpClient.post<{amount: number}>(`http://localhost:7777/api/v1/currency/exchange/${from}/`, {
+      this._apiService.postCurrenciesExchanges({
+        from,
         to,
         amount: fromAmount
       }).subscribe((result) => {
@@ -102,6 +100,10 @@ export class AppComponent implements OnInit {
         throw new Error(error);
       });
     }
+  }
+
+  areExchangesLoaded(availableExchanges: Array<IExchange>): boolean {
+    return availableExchanges.length > 0;
   }
 
 
