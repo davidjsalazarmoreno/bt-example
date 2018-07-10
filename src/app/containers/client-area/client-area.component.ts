@@ -37,6 +37,7 @@ export class ClientAreaComponent implements OnInit {
   public availableExchanges: Array<IExchange> = [];
   public controlsConfig = controlsConfig;
   public form: FormGroup;
+  public loading = false;
 
   fromOptions = { prefix: '', thousands: ',', decimal: '.' };
   toOptions =  { prefix: '', thousands: ',', decimal: '.' };
@@ -47,6 +48,7 @@ export class ClientAreaComponent implements OnInit {
   ) {
     this.handleNewConversion = this.handleNewConversion.bind(this);
     this.handleError = this.handleError.bind(this);
+    this.toggleLoading = this.toggleLoading.bind(this);
   }
 
   public ngOnInit() {
@@ -85,8 +87,10 @@ export class ClientAreaComponent implements OnInit {
     const conversionKey = `${from}-${to}-${fromAmount}`;
     const previousResults: IPreviousResults = JSON.parse(window.sessionStorage.getItem('previousResults')) || {};
 
+    this.toggleLoading();
     if (previousResults.hasOwnProperty(conversionKey) && isLessThanTenMinutes(previousResults[conversionKey])) {
       this.form.controls[controlsConfig.to.name].patchValue(previousResults[conversionKey].result);
+      this.toggleLoading();
     } else {
       this._apiService.postCurrenciesExchanges({
         from,
@@ -120,6 +124,7 @@ export class ClientAreaComponent implements OnInit {
 
     this.form.controls[controlsConfig.to.name].patchValue(amount);
     window.sessionStorage.setItem('previousResults', JSON.stringify(newResult));
+    this.toggleLoading();
 
     return empty();
   }
@@ -128,11 +133,16 @@ export class ClientAreaComponent implements OnInit {
     console.warn(error);
 
     window.alert('Sorry, try again later');
+    this.toggleLoading();
     return empty();
   }
 
   areExchangesLoaded(availableExchanges: Array<IExchange>): boolean {
     return availableExchanges.length > 0;
+  }
+
+  toggleLoading() {
+    this.loading = !this.loading;
   }
 
 
