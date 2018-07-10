@@ -1,9 +1,12 @@
 import { Component, OnInit,  } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { mergeMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 
 import { ApiService } from '../../business/services/api.services';
 import { IExchange } from '../../components/exchanges-selector/exchanges-selector.component';
 import { isLessThanTenMinutes } from '../../commons/index';
+import { empty } from 'rxjs';
 
 const controlsConfig = {
   availableExchanges: {
@@ -18,7 +21,7 @@ const controlsConfig = {
 };
 
 // TODO: LOOK A PLACE FOR THIS
-export interface IPreviousConversions {
+export interface IPreviousResults {
   [key: string]: {
     result: number,
     createdAt: Date,
@@ -41,7 +44,10 @@ export class ClientAreaComponent implements OnInit {
   constructor(
     private _apiService: ApiService,
     private _formBuilder: FormBuilder,
-  ) {}
+  ) {
+    this.handleNewConversion = this.handleNewConversion.bind(this);
+    this.handleError = this.handleError.bind(this);
+  }
 
   public ngOnInit() {
     this.buildForm();
@@ -71,35 +77,58 @@ export class ClientAreaComponent implements OnInit {
   }
 
   onSubmit(): void {
+    const { handleNewConversion,
+            handleError } = this;
     const selectedIndex: number = this.form.controls[controlsConfig.availableExchanges.name].value;
     const { from, to } = this.availableExchanges[selectedIndex].currencies;
     const fromAmount: number = this.form.controls[controlsConfig.from.name].value;
-    const currentConversionKey = `${from}-${to}-${fromAmount}`;
-    const previousConversions: IPreviousConversions = JSON.parse(window.sessionStorage.getItem('previousConversions')) || {};
+    const conversionKey = `${from}-${to}-${fromAmount}`;
+    const previousResults: IPreviousResults = JSON.parse(window.sessionStorage.getItem('previousResults')) || {};
 
-    if (previousConversions.hasOwnProperty(currentConversionKey) && isLessThanTenMinutes(previousConversions[currentConversionKey])) {
-      this.form.controls[controlsConfig.to.name].patchValue(previousConversions[`${from}-${to}-${fromAmount}`].result);
+    if (previousResults.hasOwnProperty(conversionKey) && isLessThanTenMinutes(previousResults[conversionKey])) {
+      this.form.controls[controlsConfig.to.name].patchValue(previousResults[conversionKey].result);
     } else {
       this._apiService.postCurrenciesExchanges({
         from,
         to,
         amount: fromAmount
-      }).subscribe((result) => {
-        const newResult: IPreviousConversions = {
-          ...previousConversions,
-          [`${from}-${to}-${fromAmount}`]: {
-            result: result.amount,
-            createdAt: new Date(),
-          }
-        };
-
-        this.form.controls[controlsConfig.to.name].patchValue(result.amount);
-        window.sessionStorage.setItem('previousConversions', JSON.stringify(newResult));
-
-      }, (error) => {
-        throw new Error(error);
+      }).pipe(
+        mergeMap(() => handleNewConversion({
+          conversionKey,
+          amount: fromAmount,
+          previousResults,
+        })),
+        catchError(handleError),
+      ).subscribe(() => {
+        console.log('Calling currencies exchanges');
       });
     }
+  }
+
+  handleNewConversion(config: {
+    conversionKey: string,
+    amount: number,
+    previousResults: Object,
+  }) {
+    const { conversionKey, amount, previousResults } = config;
+    const newResult: IPreviousResults = {
+      [conversionKey]: {
+        result: amount,
+        createdAt: new Date(),
+      }
+    };
+
+    this.form.controls[controlsConfig.to.name].patchValue(amount);
+    window.sessionStorage.setItem('previousResults', JSON.stringify(newResult));
+
+    return empty();
+  }
+
+  handleError(error) {
+    console.warn(error);
+
+    window.alert('Sorry, try again later');
+    return empty();
   }
 
   areExchangesLoaded(availableExchanges: Array<IExchange>): boolean {
