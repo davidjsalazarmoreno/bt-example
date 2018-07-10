@@ -1,31 +1,42 @@
 <form
   [formGroup]="form"
   *ngIf="areExchangesLoaded(availableExchanges)"
+  class="form-inline justify-content-center app-client-area"
   (submit)="onSubmit()"
 >
 
-  <app-exchanges-selector
-    [exchanges]="availableExchanges"
-    [formControlName]="controlsConfig.availableExchanges.name"
-    (change)="onExchangeSelect()"
-  ></app-exchanges-selector>
+  <div class="form-group mx-sm-3 mb-2">
+    <app-exchanges-selector
+      [exchanges]="availableExchanges"
+      [formControlName]="controlsConfig.availableExchanges.name"
+      (change)="onExchangeSelect()"
+    ></app-exchanges-selector>
+  </div>
 
-  <input
-    currencyMask
-    [formControlName]="controlsConfig.from.name"
-    [options]="fromOptions"
-  />
+  <div class="form-group mx-sm-3 mb-2">
+    <input
+      currencyMask
+      [formControlName]="controlsConfig.from.name"
+      [options]="fromOptions"
+      class="form-control"
+    />
+  </div>
 
-  <input
-    currencyMask
-    [formControlName]="controlsConfig.to.name"
-    [options]="toOptions"
-  />
+  <div class="form-group mx-sm-3 mb-2">
+    <input
+      currencyMask
+      readonly
+      [formControlName]="controlsConfig.to.name"
+      [options]="toOptions"
+      class="form-control"
+    />
+  </div>
 
   <button
     type="submit"
-    [disabled]="!form.valid"
+    class="btn btn-primary mx-sm-3 mb-2"
+    [disabled]="!form.valid || loading"
   >
-    Submit
+    Calculate
   </button>
 </form>
