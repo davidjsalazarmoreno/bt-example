@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, Output, EventEmitter, ElementRef } from '@angular/core';
-import { ControlValueAccessor } from '@angular/forms';
+import { Component, OnInit, Input, Output, EventEmitter, ElementRef, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface IExchange {
   currencies: { from: string, to: string };
@@ -11,7 +11,14 @@ export interface IExchange {
 @Component({
   selector: 'app-exchanges-selector',
   templateUrl: './exchanges-selector.component.html',
-  styleUrls: ['./exchanges-selector.component.sass']
+  styleUrls: ['./exchanges-selector.component.sass'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => ExchangesSelectorComponent),
+      multi: true
+    }
+  ]
 })
 export class ExchangesSelectorComponent implements OnInit, ControlValueAccessor {
   @Input() exchanges: Array<IExchange>;
