@@ -1,6 +1,6 @@
 <form
   [formGroup]="form"
-  *ngIf="availableExchanges.length > 0"
+  *ngIf="areExchangesLoaded(availableExchanges)"
   (submit)="onSubmit()"
 >
 
