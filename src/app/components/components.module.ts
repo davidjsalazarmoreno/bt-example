@@ -17,6 +17,9 @@ import { ExchangesSelectorComponent } from './exchanges-selector/exchanges-selec
     ReactiveFormsModule,
     NgxCurrencyModule,
   ],
+  exports: [
+    ExchangesSelectorComponent
+  ],
   providers: [],
 })
 export class ComponentsModule { }
